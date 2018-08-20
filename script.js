@@ -131,6 +131,7 @@ let getNextCandidatesFromDistrict = () => {
             console.log("RETRIEVED CANDIDATES FROM DISTRICT-------------------------------------------------");
             console.log(response);
             //
+            document.getElementById("loading").parentElement.removeChild(document.getElementById("loading"));
             document.getElementById("yourCurrentRepName").innerHTML= `<a href = '${userHouseRepProfile.contact.url}'>${userHouseRepProfile.bio.first_name} ${userHouseRepProfile.bio.last_name}</a>`;
             document.getElementById("yourCurrentRepJurisdiction").innerText= `(${userHouseRepProfile.bio.party} - ${userGeneralPoliticalGeoData.address_components.state})`;
             document.getElementById("yourCurrentRepDistrict").innerText= `${userGeneralPoliticalGeoData.fields.congressional_districts[0].name}`;
