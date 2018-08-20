@@ -53,9 +53,16 @@ img {
     border-radius: 15px;
 }
 a {
-    color: white;
-    
+    color: white;   
 }
 .loadingImg {
     height: 10%;
+}
+.divider {
+    height: 5px;
+    width: 100%;
+
+    background-color: white;
+
+    margin: 10px 0;
 }

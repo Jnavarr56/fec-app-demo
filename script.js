@@ -160,6 +160,11 @@ let writeBasic = () => {
     document.getElementById("yourCurrentRepOfficeAndPhone").innerHTML= `DC OFFICE: <br>${userHouseRepProfile.contact.address}<br>${userHouseRepProfile.contact.phone}`;
     document.getElementById("yourCurrentRepOfficeAndPhone").style.textAlign = "center";
     document.getElementById("yourCurrentRepPic").src = `${userHouseRepProfile.bio.img}`;
+    let divider1 = document.createElement("div");
+    divider1.classList.add("divider");
+    document.getElementById("main").insertBefore(divider1, document.getElementById("yourCurrentRepCommitteeAppts"));
+
+    
     document.getElementById("yourCurrentRepCommitteeAppts").innerHTML = `COMMITTEE APPOINTMENTS [${userHouseRepProfile.committee_appts.length}]:`;
     for (let x = 0; x < userHouseRepProfile.committee_appts.length; x++) {
         let committee = document.createElement("h2");
@@ -172,12 +177,9 @@ let writeBasic = () => {
         committeePhone.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.phone}`;
         let committeeAddress = document.createElement("h3");
         committeeAddress.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.address}`;
-
         [committeeSummary, committeePhone, committeeAddress].forEach((element)=>{
             document.getElementById("main").appendChild(element);
-        });
-
-        
+        });        
         let subcommitteesList = document.createElement("ul");
         if (userHouseRepProfile.committee_appts[x].rank === 1) {
             let title = document.createElement("li");
@@ -200,11 +202,14 @@ let writeBasic = () => {
         }
         document.getElementById("main").appendChild(subcommitteesList);
     }
+    let divider2 = document.createElement("div");
+    divider2.classList.add("divider");
+    document.getElementById("main").appendChild(divider2);
+
     let contactHeader = document.createElement("h1");
     contactHeader.innerText = "SOCIAL MEDIA";
     document.getElementById("main").appendChild(contactHeader);
     let contactList = document.createElement("ul");
-
     for (let x in userHouseRepProfile.social) {
         if (x.toString() === "rss_url" || x.toString() === "youtube_id") {
             continue;
@@ -214,6 +219,10 @@ let writeBasic = () => {
         contactList.appendChild(contact)
     } 
     document.getElementById("main").appendChild(contactList);
+    let divider3 = document.createElement("div");
+    divider3.classList.add("divider");
+    document.getElementById("main").appendChild(divider3);
+
 
     let nextPrimary = document.createElement("h1");
     let primaryChron = "UPCOMING";
@@ -234,6 +243,9 @@ let writeBasic = () => {
         nextList.appendChild(candidate);
     }
     document.getElementById("main").appendChild(nextList);
+    let divider4 = document.createElement("div");
+    divider4.classList.add("divider");
+    document.getElementById("main").appendChild(divider4);
 
     let nextGeneral = document.createElement("h1");
     nextGeneral.innerText = `NEXT GENERAL (${nextElections.results[0].election_date})`;
