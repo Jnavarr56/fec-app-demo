@@ -216,7 +216,13 @@ let writeBasic = () => {
     document.getElementById("main").appendChild(contactList);
 
     let nextPrimary = document.createElement("h1");
-    nextPrimary.innerText = `NEXT PRIMARY CANDIDATES (${nextElections.results[1].election_date}):`;
+    let primaryChron = "UPCOMING";
+    Date.parse(nextElections.results[1].election_date);
+    if (currentDate > Date.parse(nextElections.results[1].election_date)) {
+        primaryChron = "PAST";
+    }
+    console.log(currentDate.getMilliseconds());
+    nextPrimary.innerText = `${primaryChron} PRIMARY CANDIDATES (${nextElections.results[1].election_date}):`;
     document.getElementById("main").appendChild(nextPrimary);
     let nextList = document.createElement("ul");
     for (let x = 0; x < nextCandidates.data.results.length; x++) {
