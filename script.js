@@ -114,8 +114,6 @@ let retrieveUserHouseRepCommApptText = () => {
             console.log(error);
     });
 }
-
-
 let getNextCandidatesFromDistrict = () => {
     //this returns depending on year candidates in a certain year
     //i should search by elections and find if current year or current year + 1 will yield
@@ -126,103 +124,118 @@ let getNextCandidatesFromDistrict = () => {
     else {
         districtNum = userGeneralPoliticalGeoData.fields.congressional_districts[0].district_number; 
     }
-    axios.get(`https://api.open.fec.gov/v1/candidates/?year=${currentDate.getFullYear()}&district=${districtNum}&sort=name&page=1&election_year=${  currentDate.getFullYear()}&api_key=${fecAPIKey}&state=${userGeneralPoliticalGeoData.address_components.state}&office=H&per_page=100`)
+    axios.get(`https://api.open.fec.gov/v1/candidates/?year=${currentDate.getFullYear()}&district=${districtNum}&sort=name&page=1&election_year=${currentDate.getFullYear()}&api_key=${fecAPIKey}&state=${userGeneralPoliticalGeoData.address_components.state}&office=H&per_page=100`)
         .then((response)=> {
             console.log("RETRIEVED CANDIDATES FROM DISTRICT-------------------------------------------------");
-            console.log(response);
-            //
-            document.getElementById("loading").parentElement.removeChild(document.getElementById("loading"));
-            document.getElementById("yourCurrentRepName").innerHTML= `<a href = '${userHouseRepProfile.contact.url}'>${userHouseRepProfile.bio.first_name} ${userHouseRepProfile.bio.last_name}</a>`;
-            document.getElementById("yourCurrentRepJurisdiction").innerText= `(${userHouseRepProfile.bio.party} - ${userGeneralPoliticalGeoData.address_components.state})`;
-            document.getElementById("yourCurrentRepDistrict").innerText= `${userGeneralPoliticalGeoData.fields.congressional_districts[0].name}`;
-            document.getElementById("yourCurrentRepOfficeAndPhone").innerHTML= `DC OFFICE: <br>${userHouseRepProfile.contact.address}<br>${userHouseRepProfile.contact.phone}`;
-            document.getElementById("yourCurrentRepOfficeAndPhone").style.textAlign = "center";
-            document.getElementById("yourCurrentRepPic").src = `${userHouseRepProfile.bio.img}`;
-            document.getElementById("yourCurrentRepCommitteeAppts").innerHTML = `COMMITTEE APPOINTMENTS [${userHouseRepProfile.committee_appts.length}]:`;
-            for (let x = 0; x < userHouseRepProfile.committee_appts.length; x++) {
-                let committee = document.createElement("h2");
-                committee.innerHTML = `<a href = '${userHouseRepProfile.committee_appts[x].committee_info.minority_url}'>${userHouseRepProfile.committee_appts[x].committee_info.name} - Rank: ${userHouseRepProfile.committee_appts[x].rank}</a>`;
-                document.getElementById("main").appendChild(committee);
-                let committeeSummary = document.createElement("h3");
-                committeeSummary.classList.add("summary");
-                committeeSummary.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.jurisdiction}`;
-                let committeePhone = document.createElement("h3");
-                committeePhone.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.phone}`;
-                let committeeAddress = document.createElement("h3");
-                committeeAddress.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.address}`;
-
-                [committeeSummary, committeePhone, committeeAddress].forEach((element)=>{
-                    document.getElementById("main").appendChild(element);
-                });
-
-                
-                let subcommitteesList = document.createElement("ul");
-                if (userHouseRepProfile.committee_appts[x].rank === 1) {
-                    let title = document.createElement("li");
-                    title.innerHTML = "<em>RANKING MEMBER</em>";
-                    subcommitteesList.appendChild(title);   
-                }
-                else {
-                    for (let y = 0; y < userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn.length; y++) {
-                        let subcommittee = document.createElement("li");
-                        let title;
-                        if (userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].title === undefined) {
-                            title = "none";
-                        }
-                        else {
-                            title = userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].title;
-                        }
-                        subcommittee.innerHTML = `Subcommittee: ${userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].subcomittee_info.name}<br> Title: ${title}<br> Rank: ${userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].rank}`;
-                        subcommitteesList.appendChild(subcommittee);
-                    }
-                }
-                document.getElementById("main").appendChild(subcommitteesList);
-            }
-            let contactHeader = document.createElement("h1");
-            contactHeader.innerText = "SOCIAL MEDIA";
-            document.getElementById("main").appendChild(contactHeader);
-            let contactList = document.createElement("ul");
-
-            for (let x in userHouseRepProfile.social) {
-                if (x.toString() === "rss_url" || x.toString() === "youtube_id") {
-                    continue;
-                }
-                let contact = document.createElement("li");
-                contact.innerHTML = `<a href = 'http://${x.toString()}.com/${userHouseRepProfile.social[x]}' target = '_blank'>${x.toString().toUpperCase()}</a>`;
-                contactList.appendChild(contact)
-            } 
-            document.getElementById("main").appendChild(contactList);
-
-            let nextPrimary = document.createElement("h1");
-            nextPrimary.innerText = "NEXT PRIMARY CANDIDATES:";
-            document.getElementById("main").appendChild(nextPrimary);
-            let nextList = document.createElement("ul");
-            for (let x = 0; x < response.data.results.length; x++) {
-                let candidate = document.createElement("li");
-                candidate.innerHTML = `Name: ${response.data.results[x].name}<br> Party: ${response.data.results[x].party_full}<br> Challenge Status: ${response.data.results[x].incumbent_challenge_full}`
-                nextList.appendChild(candidate);
-
-            }
-            document.getElementById("main").appendChild(nextList);
-
-            
-
-            
-            
-            
-
-            
-            //
+            nextCandidates = response;
+            console.log(nextCandidates);
             console.log("-----------------------------------------------------------------------------");
+            getNextElectionsFromDistrict();
         })
         .catch((error)=> {
             console.log("FAILED AT getNextCandidatesFromDistrict");
             console.log(error);
     });
 }
+let getNextElectionsFromDistrict = () => {
+    axios.get(`https://api.open.fec.gov/v1/election-dates/?office_sought=H&sort=-election_date&election_state=${userGeneralPoliticalGeoData.address_components.state}&page=1&election_year=${currentDate.getFullYear()}&api_key=${fecAPIKey}&per_page=100`)
+        .then((response)=> {
+            console.log("RETRIEVED ELECTIONS FROM DISTRICT-------------------------------------------------");
+            nextElections = response.data;
+            console.log(nextElections);
+            console.log("-----------------------------------------------------------------------------");
+            writeBasic();
+        })
+        .catch((error)=> {
+            console.log("FAILED AT getNextElectionsFromDistrict");
+            console.log(error);
+    });
+}
 
+let writeBasic = () => {
+    document.getElementById("loading").parentElement.removeChild(document.getElementById("loading"));
+    document.getElementById("yourCurrentRepName").innerHTML= `<a href = '${userHouseRepProfile.contact.url}'>${userHouseRepProfile.bio.first_name} ${userHouseRepProfile.bio.last_name}</a>`;
+    document.getElementById("yourCurrentRepJurisdiction").innerText= `(${userHouseRepProfile.bio.party} - ${userGeneralPoliticalGeoData.address_components.state})`;
+    document.getElementById("yourCurrentRepDistrict").innerText= `${userGeneralPoliticalGeoData.fields.congressional_districts[0].name}`;
+    document.getElementById("yourCurrentRepOfficeAndPhone").innerHTML= `DC OFFICE: <br>${userHouseRepProfile.contact.address}<br>${userHouseRepProfile.contact.phone}`;
+    document.getElementById("yourCurrentRepOfficeAndPhone").style.textAlign = "center";
+    document.getElementById("yourCurrentRepPic").src = `${userHouseRepProfile.bio.img}`;
+    document.getElementById("yourCurrentRepCommitteeAppts").innerHTML = `COMMITTEE APPOINTMENTS [${userHouseRepProfile.committee_appts.length}]:`;
+    for (let x = 0; x < userHouseRepProfile.committee_appts.length; x++) {
+        let committee = document.createElement("h2");
+        committee.innerHTML = `<a href = '${userHouseRepProfile.committee_appts[x].committee_info.minority_url}'>${userHouseRepProfile.committee_appts[x].committee_info.name} - Rank: ${userHouseRepProfile.committee_appts[x].rank}</a>`;
+        document.getElementById("main").appendChild(committee);
+        let committeeSummary = document.createElement("h3");
+        committeeSummary.classList.add("summary");
+        committeeSummary.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.jurisdiction}`;
+        let committeePhone = document.createElement("h3");
+        committeePhone.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.phone}`;
+        let committeeAddress = document.createElement("h3");
+        committeeAddress.innerText = `${userHouseRepProfile.committee_appts[x].committee_info.address}`;
 
+        [committeeSummary, committeePhone, committeeAddress].forEach((element)=>{
+            document.getElementById("main").appendChild(element);
+        });
 
+        
+        let subcommitteesList = document.createElement("ul");
+        if (userHouseRepProfile.committee_appts[x].rank === 1) {
+            let title = document.createElement("li");
+            title.innerHTML = "<em>RANKING MEMBER</em>";
+            subcommitteesList.appendChild(title);   
+        }
+        else {
+            for (let y = 0; y < userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn.length; y++) {
+                let subcommittee = document.createElement("li");
+                let title;
+                if (userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].title === undefined) {
+                    title = "none";
+                }
+                else {
+                    title = userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].title;
+                }
+                subcommittee.innerHTML = `Subcommittee: ${userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].subcomittee_info.name}<br> Title: ${title}<br> ${userHouseRepProfile.bio.first_name}'s Rank: ${userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].rank}`;
+                subcommitteesList.appendChild(subcommittee);
+            }
+        }
+        document.getElementById("main").appendChild(subcommitteesList);
+    }
+    let contactHeader = document.createElement("h1");
+    contactHeader.innerText = "SOCIAL MEDIA";
+    document.getElementById("main").appendChild(contactHeader);
+    let contactList = document.createElement("ul");
+
+    for (let x in userHouseRepProfile.social) {
+        if (x.toString() === "rss_url" || x.toString() === "youtube_id") {
+            continue;
+        }
+        let contact = document.createElement("li");
+        contact.innerHTML = `<a href = 'http://${x.toString()}.com/${userHouseRepProfile.social[x]}' target = '_blank'>${x.toString().toUpperCase()}</a>`;
+        contactList.appendChild(contact)
+    } 
+    document.getElementById("main").appendChild(contactList);
+
+    let nextPrimary = document.createElement("h1");
+    nextPrimary.innerText = `NEXT PRIMARY CANDIDATES (${nextElections.results[1].election_date}):`;
+    document.getElementById("main").appendChild(nextPrimary);
+    let nextList = document.createElement("ul");
+    for (let x = 0; x < nextCandidates.data.results.length; x++) {
+        let candidate = document.createElement("li");
+        if (nextCandidates.data.results[x].name.split(" ")[1].toLowerCase() === userHouseRepProfile.bio.first_name.toLowerCase()) {
+            candidate.style.color = "blue";
+            candidate.style.backgroundColor = "white";
+            candidate.style.borderRadius = "5px";
+        }
+        candidate.innerHTML = `Name: ${nextCandidates.data.results[x].name}<br> Party: ${nextCandidates.data.results[x].party_full}<br> Challenge Status: ${nextCandidates.data.results[x].incumbent_challenge_full}`
+        nextList.appendChild(candidate);
+    }
+    document.getElementById("main").appendChild(nextList);
+
+    let nextGeneral = document.createElement("h1");
+    nextGeneral.innerText = `NEXT GENERAL (${nextElections.results[0].election_date})`;
+    document.getElementById("main").appendChild(nextGeneral);
+
+}
 
 //----------------------------------------------------------------------
 
@@ -232,12 +245,15 @@ let currentDate = new Date();
 
 let userGeneralPoliticalGeoData = {};
 let userHouseRepProfile = {};
+let nextCandidates = {};
+let nextElections = {};
 let electionData = {};
 
 
 
 
 retrieveAllData();
+
 
 
 
