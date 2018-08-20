@@ -1,4 +1,6 @@
 
+let x2js = new X2JS();
+
 //----------------------------------------------------------------------
 let retrieveAllData = () => {
     //1) Get user Latitude and Longitude and pass to #2.
@@ -144,13 +146,124 @@ let getNextElectionsFromDistrict = () => {
             nextElections = response.data;
             console.log(nextElections);
             console.log("-----------------------------------------------------------------------------");
-            writeBasic();
+            
+            getNextElectionsByZipForElectionId();
         })
         .catch((error)=> {
             console.log("FAILED AT getNextElectionsFromDistrict");
             console.log(error);
     });
 }
+
+let getNextElectionsByZipForElectionId = () => {
+    axios.get(`http://api.votesmart.org/Election.getElectionByZip?key=b331f600a4dc88328ba16a62b5b5b20e&candidateId=9490&zip5=${userGeneralPoliticalGeoData.address_components.zip}`)
+    .then((response)=> {
+        console.log("RETRIEVED ELECTIONS FROM ZIP (VOTESMART)-------------------------------------");
+        electionVoteSmartIds = x2js.xml_str2json(response.data);
+        console.log(electionVoteSmartIds);
+        getPrimaryResults();
+        console.log("-----------------------------------------------------------------------------");
+    })
+    .catch((error)=> {
+        console.log("FAILED AT getNextElectionsByZipForElectionId");
+        console.log(error);
+    });
+}
+
+
+let getPrimaryResults = () => {
+    axios.get(`http://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=P`)
+    .then((response)=> {
+        console.log("RETRIEVED ELECTIONS PRIMARY RESULTS-------------------------------------------");
+        let rawCandidates = x2js.xml_str2json(response.data);
+        districtCandidatesPrimary = x2js.xml_str2json(response.data);
+        districtCandidatesPrimary.stageCandidates.candidate = [];
+        for (let x = 0; x < rawCandidates.stageCandidates.candidate.length; x++) {
+            if (rawCandidates.stageCandidates.candidate[x].district === userGeneralPoliticalGeoData.fields.congressional_districts[0].district_number.toString()) {
+                districtCandidatesPrimary.stageCandidates.candidate.push(rawCandidates.stageCandidates.candidate[x]);
+            }
+        }
+        writeBasic();
+        getGeneralResults();
+        console.log(districtCandidatesPrimary);
+        console.log("-----------------------------------------------------------------------------");
+    })
+    .catch((error)=> {
+        console.log("FAILED AT getPrimaryResults");
+        console.log(error);
+    });
+}
+
+let getGeneralResults = () => {
+    axios.get(`http://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=G`)
+    .then((response)=> {
+        console.log("RETRIEVED ELECTIONS GENERAL RESULTS------------------------------------------");
+        let getGeneralRunners = x2js.xml_str2json(response.data);
+        
+        let candidatesGeneral = [];
+        for (let x = 0; x < getGeneralRunners.stageCandidates.candidate.length; x++) {
+            if (getGeneralRunners.stageCandidates.candidate[x].district === userGeneralPoliticalGeoData.fields.congressional_districts[0].district_number.toString()) {
+                candidatesGeneral.push(getGeneralRunners.stageCandidates.candidate[x]);
+            }
+        }
+        getGeneralRunners.stageCandidates.candidate = candidatesGeneral;
+        console.log(getGeneralRunners);
+        console.log("-----------------------------------------------------------------------------");
+    })
+    .catch((error)=> {
+        console.log("FAILED AT getGeneralResults");
+        console.log(error);
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+let xmlToJson = (xml) => {
+	
+	// Create the return object
+	var obj = {};
+
+	if (xml.nodeType == 1) { // element
+		// do attributes
+		if (xml.attributes.length > 0) {
+		obj["@attributes"] = {};
+			for (var j = 0; j < xml.attributes.length; j++) {
+				var attribute = xml.attributes.item(j);
+				obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+			}
+		}
+	} else if (xml.nodeType == 3) { // text
+		obj = xml.nodeValue;
+	}
+
+	// do children
+	if (xml.hasChildNodes()) {
+		for(var i = 0; i < xml.childNodes.length; i++) {
+			var item = xml.childNodes.item(i);
+			var nodeName = item.nodeName;
+			if (typeof(obj[nodeName]) == "undefined") {
+				obj[nodeName] = xmlToJson(item);
+			} else {
+				if (typeof(obj[nodeName].push) == "undefined") {
+					var old = obj[nodeName];
+					obj[nodeName] = [];
+					obj[nodeName].push(old);
+				}
+				obj[nodeName].push(xmlToJson(item));
+			}
+		}
+	}
+	return obj;
+};
 
 let writeBasic = () => {
     document.getElementById("loading").parentElement.removeChild(document.getElementById("loading"));
@@ -168,7 +281,7 @@ let writeBasic = () => {
     document.getElementById("yourCurrentRepCommitteeAppts").innerHTML = `COMMITTEE APPOINTMENTS [${userHouseRepProfile.committee_appts.length}]:`;
     for (let x = 0; x < userHouseRepProfile.committee_appts.length; x++) {
         let committee = document.createElement("h2");
-        committee.innerHTML = `<a href = '${userHouseRepProfile.committee_appts[x].committee_info.minority_url}'>${userHouseRepProfile.committee_appts[x].committee_info.name} - Rank: ${userHouseRepProfile.committee_appts[x].rank}</a>`;
+        committee.innerHTML = `<a href = '${userHouseRepProfile.committee_appts[x].committee_info.jurisdiction_source}'>${userHouseRepProfile.committee_appts[x].committee_info.name} - Rank: ${userHouseRepProfile.committee_appts[x].rank}</a>`;
         document.getElementById("main").appendChild(committee);
         let committeeSummary = document.createElement("h3");
         committeeSummary.classList.add("summary");
@@ -188,6 +301,7 @@ let writeBasic = () => {
         }
         else {
             for (let y = 0; y < userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn.length; y++) {
+                console.log(userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn.length);
                 let subcommittee = document.createElement("li");
                 let title;
                 if (userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].title === undefined) {
@@ -233,6 +347,7 @@ let writeBasic = () => {
     document.getElementById("main").appendChild(nextPrimary);
     let nextList = document.createElement("ul");
     let openSeat = false;
+    let toClone = [];
     for (let x = 0; x < nextCandidates.data.results.length; x++) {
         let candidate = document.createElement("li");
         if (nextCandidates.data.results[x].incumbent_challenge_full === "Open seat") {
@@ -249,7 +364,16 @@ let writeBasic = () => {
             candidate.style.borderRadius = "5px"; 
             nextCandidates.data.results[x].incumbent_challenge_full = "Not running";
         }
-        candidate.innerHTML = `Name: ${nextCandidates.data.results[x].name}<br> Party: ${nextCandidates.data.results[x].party_full}<br> Challenge Status: ${nextCandidates.data.results[x].incumbent_challenge_full}`
+        let winStat = "";
+        for (let y = 0; y < districtCandidatesPrimary.stageCandidates.candidate.length; y++) {
+            if (districtCandidatesPrimary.stageCandidates.candidate[y].lastName.toLowerCase() === nextCandidates.data.results[x].name.replace(",", "").split(" ")[0].toLowerCase() && districtCandidatesPrimary.stageCandidates.candidate[y].status === "Won") {
+                winStat = "Status: WON PRIMARY";
+                candidate.style.backgroundColor = "green";
+                candidate.style.borderRadius = "5px";
+                candidate.style.color = "white";
+            }
+        }
+        candidate.innerHTML = `Name: ${nextCandidates.data.results[x].name}<br> Party: ${nextCandidates.data.results[x].party_full}<br> Challenge Status: ${nextCandidates.data.results[x].incumbent_challenge_full}<br> ${winStat}`;
         nextList.appendChild(candidate);
     }
     document.getElementById("main").appendChild(nextList);
@@ -258,8 +382,18 @@ let writeBasic = () => {
     document.getElementById("main").appendChild(divider4);
 
     let nextGeneral = document.createElement("h1");
-    nextGeneral.innerText = `NEXT GENERAL (${nextElections.results[0].election_date})`;
+    nextGeneral.innerText = `NEXT GENERAL CANDIDATES(${nextElections.results[0].election_date})`;
     document.getElementById("main").appendChild(nextGeneral);
+
+
+    let nextGeneralList = document.createElement("ul");
+    toClone.forEach((element)=>{
+        nextGeneralList.appendChild(element);
+    });
+    document.getElementById("main").appendChild(nextGeneralList);
+
+
+    console.log(toClone);
 }
 
 //----------------------------------------------------------------------
@@ -272,7 +406,8 @@ let userGeneralPoliticalGeoData = {};
 let userHouseRepProfile = {};
 let nextCandidates = {};
 let nextElections = {};
-let electionData = {};
+let electionVoteSmartIds = {};
+let districtCandidatesPrimary = {};
 
 
 
