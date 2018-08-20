@@ -232,12 +232,22 @@ let writeBasic = () => {
     nextPrimary.innerText = `${primaryChron} PRIMARY CANDIDATES (${nextElections.results[1].election_date}):`;
     document.getElementById("main").appendChild(nextPrimary);
     let nextList = document.createElement("ul");
+    let openSeat = false;
     for (let x = 0; x < nextCandidates.data.results.length; x++) {
         let candidate = document.createElement("li");
-        if (nextCandidates.data.results[x].incumbent_challenge_full === "Incumbent") {
+        if (nextCandidates.data.results[x].incumbent_challenge_full === "Open seat") {
+            openSeat = true;
+        }
+        if (nextCandidates.data.results[x].incumbent_challenge_full === "Incumbent" && !openSeat) {
             candidate.style.color = "blue";
             candidate.style.backgroundColor = "white";
             candidate.style.borderRadius = "5px";
+        }
+        if (nextCandidates.data.results[x].incumbent_challenge_full === "Incumbent" && openSeat) {
+            candidate.style.color = "white";
+            candidate.style.backgroundColor = "red";
+            candidate.style.borderRadius = "5px"; 
+            nextCandidates.data.results[x].incumbent_challenge_full = "Not running";
         }
         candidate.innerHTML = `Name: ${nextCandidates.data.results[x].name}<br> Party: ${nextCandidates.data.results[x].party_full}<br> Challenge Status: ${nextCandidates.data.results[x].incumbent_challenge_full}`
         nextList.appendChild(candidate);
@@ -250,7 +260,6 @@ let writeBasic = () => {
     let nextGeneral = document.createElement("h1");
     nextGeneral.innerText = `NEXT GENERAL (${nextElections.results[0].election_date})`;
     document.getElementById("main").appendChild(nextGeneral);
-
 }
 
 //----------------------------------------------------------------------
