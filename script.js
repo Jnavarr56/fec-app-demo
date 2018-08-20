@@ -128,7 +128,7 @@ let getNextCandidatesFromDistrict = () => {
     }
     axios.get(`https://api.open.fec.gov/v1/candidates/?year=${currentDate.getFullYear()}&district=${districtNum}&sort=name&page=1&election_year=${currentDate.getFullYear()}&api_key=${fecAPIKey}&state=${userGeneralPoliticalGeoData.address_components.state}&office=H&per_page=100`)
         .then((response)=> {
-            console.log("RETRIEVED CANDIDATES FROM DISTRICT-------------------------------------------------");
+            console.log("RETRIEVED CANDIDATES FROM DISTRICT-------------------------------------------");
             nextCandidates = response;
             console.log(nextCandidates);
             console.log("-----------------------------------------------------------------------------");
@@ -175,6 +175,8 @@ let getPrimaryResults = () => {
     axios.get(`http://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=P`)
     .then((response)=> {
         console.log("RETRIEVED ELECTIONS PRIMARY RESULTS-------------------------------------------");
+        console.log("RAW");
+        console.log(x2js.xml_str2json(response.data));
         let rawCandidates = x2js.xml_str2json(response.data);
         districtCandidatesPrimary = x2js.xml_str2json(response.data);
         districtCandidatesPrimary.stageCandidates.candidate = [];
@@ -183,8 +185,9 @@ let getPrimaryResults = () => {
                 districtCandidatesPrimary.stageCandidates.candidate.push(rawCandidates.stageCandidates.candidate[x]);
             }
         }
-        writeBasic();
+        
         getGeneralResults();
+        console.log("CLEAN");
         console.log(districtCandidatesPrimary);
         console.log("-----------------------------------------------------------------------------");
     })
@@ -198,8 +201,9 @@ let getGeneralResults = () => {
     axios.get(`http://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=G`)
     .then((response)=> {
         console.log("RETRIEVED ELECTIONS GENERAL RESULTS------------------------------------------");
+        console.log("RAW");
+        console.log(x2js.xml_str2json(response.data));
         let getGeneralRunners = x2js.xml_str2json(response.data);
-        
         let candidatesGeneral = [];
         for (let x = 0; x < getGeneralRunners.stageCandidates.candidate.length; x++) {
             if (getGeneralRunners.stageCandidates.candidate[x].district === userGeneralPoliticalGeoData.fields.congressional_districts[0].district_number.toString()) {
@@ -207,7 +211,10 @@ let getGeneralResults = () => {
             }
         }
         getGeneralRunners.stageCandidates.candidate = candidatesGeneral;
+        console.log("CLEAN");
         console.log(getGeneralRunners);
+        districtCandidatesGeneral = getGeneralRunners;
+        writeBasic();
         console.log("-----------------------------------------------------------------------------");
     })
     .catch((error)=> {
@@ -301,7 +308,6 @@ let writeBasic = () => {
         }
         else {
             for (let y = 0; y < userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn.length; y++) {
-                console.log(userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn.length);
                 let subcommittee = document.createElement("li");
                 let title;
                 if (userHouseRepProfile.committee_appts[x].subcomitteesRepIsIn[y].title === undefined) {
@@ -382,18 +388,19 @@ let writeBasic = () => {
     document.getElementById("main").appendChild(divider4);
 
     let nextGeneral = document.createElement("h1");
-    nextGeneral.innerText = `NEXT GENERAL CANDIDATES(${nextElections.results[0].election_date})`;
+    nextGeneral.innerText = `NEXT GENERAL CANDIDATES (${nextElections.results[0].election_date})`;
     document.getElementById("main").appendChild(nextGeneral);
 
 
     let nextGeneralList = document.createElement("ul");
-    toClone.forEach((element)=>{
-        nextGeneralList.appendChild(element);
-    });
+    for (let x = 0; x < districtCandidatesGeneral.stageCandidates.candidate.length; x++) {
+        console.log(districtCandidatesGeneral.stageCandidates.candidate[x]);
+        let candidate = document.createElement("li");
+        candidate.innerHTML = `Name: ${districtCandidatesGeneral.stageCandidates.candidate[x].lastName.toUpperCase()}, ${districtCandidatesGeneral.stageCandidates.candidate[x].firstName.toUpperCase()}<br> Party: ${districtCandidatesGeneral.stageCandidates.candidate[x].party.toUpperCase()} PARTY<br> Status: ${districtCandidatesGeneral.stageCandidates.candidate[x].status}`;
+        nextGeneralList.appendChild(candidate);
+    }
+
     document.getElementById("main").appendChild(nextGeneralList);
-
-
-    console.log(toClone);
 }
 
 //----------------------------------------------------------------------
@@ -408,6 +415,7 @@ let nextCandidates = {};
 let nextElections = {};
 let electionVoteSmartIds = {};
 let districtCandidatesPrimary = {};
+let districtCandidatesGeneral = {};
 
 
 
