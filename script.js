@@ -217,17 +217,15 @@ let writeBasic = () => {
 
     let nextPrimary = document.createElement("h1");
     let primaryChron = "UPCOMING";
-    Date.parse(nextElections.results[1].election_date);
     if (currentDate > Date.parse(nextElections.results[1].election_date)) {
         primaryChron = "PAST";
     }
-    console.log(currentDate.getMilliseconds());
     nextPrimary.innerText = `${primaryChron} PRIMARY CANDIDATES (${nextElections.results[1].election_date}):`;
     document.getElementById("main").appendChild(nextPrimary);
     let nextList = document.createElement("ul");
     for (let x = 0; x < nextCandidates.data.results.length; x++) {
         let candidate = document.createElement("li");
-        if (nextCandidates.data.results[x].name.split(" ")[1].toLowerCase() === userHouseRepProfile.bio.first_name.toLowerCase()) {
+        if (nextCandidates.data.results[x].incumbent_challenge_full === "Incumbent") {
             candidate.style.color = "blue";
             candidate.style.backgroundColor = "white";
             candidate.style.borderRadius = "5px";
