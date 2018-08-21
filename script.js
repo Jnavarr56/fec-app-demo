@@ -156,7 +156,7 @@ let getNextElectionsFromDistrict = () => {
 }
 
 let getNextElectionsByZipForElectionId = () => {
-    axios.get(`http://api.votesmart.org/Election.getElectionByZip?key=b331f600a4dc88328ba16a62b5b5b20e&candidateId=9490&zip5=${userGeneralPoliticalGeoData.address_components.zip}`)
+    axios.get(`https://api.votesmart.org/Election.getElectionByZip?key=b331f600a4dc88328ba16a62b5b5b20e&candidateId=9490&zip5=${userGeneralPoliticalGeoData.address_components.zip}`)
     .then((response)=> {
         console.log("RETRIEVED ELECTIONS FROM ZIP (VOTESMART)-------------------------------------");
         electionVoteSmartIds = x2js.xml_str2json(response.data);
@@ -172,7 +172,7 @@ let getNextElectionsByZipForElectionId = () => {
 
 
 let getPrimaryResults = () => {
-    axios.get(`http://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=P`)
+    axios.get(`https://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=P`)
     .then((response)=> {
         console.log("RETRIEVED ELECTIONS PRIMARY RESULTS-------------------------------------------");
         console.log("RAW");
@@ -198,7 +198,7 @@ let getPrimaryResults = () => {
 }
 
 let getGeneralResults = () => {
-    axios.get(`http://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=G`)
+    axios.get(`https://api.votesmart.org/Election.getStageCandidates?key=b331f600a4dc88328ba16a62b5b5b20e&electionId=${electionVoteSmartIds.elections.election[0].electionId}&stageId=G`)
     .then((response)=> {
         console.log("RETRIEVED ELECTIONS GENERAL RESULTS------------------------------------------");
         console.log("RAW");
